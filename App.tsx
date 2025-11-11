@@ -14,6 +14,7 @@ const App: React.FC = () => {
   const [isRevealed, setIsRevealed] = useState<boolean>(false);
   const [gameWon, setGameWon] = useState<boolean>(false);
   const [showWinOverlay, setShowWinOverlay] = useState<boolean>(false);
+  const [showGiveUpOverlay, setShowGiveUpOverlay] = useState<boolean>(false);
   const poisonedChocolateRef = useRef<HTMLButtonElement>(null);
 
   const initializeGame = useCallback(() => {
@@ -28,6 +29,7 @@ const App: React.FC = () => {
     setIsRevealed(false);
     setGameWon(false);
     setShowWinOverlay(false);
+    setShowGiveUpOverlay(false);
   }, []);
 
   useEffect(() => {
@@ -42,6 +44,16 @@ const App: React.FC = () => {
       return () => clearTimeout(timer);
     }
   }, [gameWon]);
+  
+  useEffect(() => {
+    const isGivingUp = gameOver && !gameWon && isRevealed;
+    if (isGivingUp) {
+      const timer = setTimeout(() => {
+        setShowGiveUpOverlay(true);
+      }, 5000); // Wait 5 seconds to show the overlay
+      return () => clearTimeout(timer);
+    }
+  }, [gameOver, gameWon, isRevealed]);
 
   useEffect(() => {
     if (isRevealed && poisonedChocolateRef.current) {
@@ -98,8 +110,8 @@ const App: React.FC = () => {
     };
   }, [chocolates]);
   
-  const isGivingUp = gameOver && !gameWon && isRevealed;
-  const isGameOverOverlayVisible = (gameOver && !gameWon) || showWinOverlay;
+  const lostByPoison = gameOver && !gameWon && !isRevealed;
+  const isGameOverOverlayVisible = lostByPoison || showWinOverlay || showGiveUpOverlay;
 
   return (
     <div className="min-h-screen bg-slate-900 text-slate-200 font-sans p-4 md:p-6 flex flex-col items-center">
@@ -115,7 +127,7 @@ const App: React.FC = () => {
         {isGameOverOverlayVisible && (
           <GameOverOverlay 
             won={gameWon} 
-            money={isGivingUp ? 0 : stats.moneyEarned} 
+            money={gameWon ? stats.moneyEarned : 0} 
             onRestart={initializeGame}
             isRevealed={isRevealed} 
           />

@@ -79,6 +79,13 @@ const App: React.FC = () => {
       setGameWon(true);
   }, [gameOver]);
 
+  const handleGiveUp = useCallback(() => {
+    if (gameOver) return;
+    setIsRevealed(true);
+    setGameOver(true);
+    setGameWon(false);
+  }, [gameOver]);
+
   const stats = useMemo(() => {
     const eatenCount = chocolates.filter(c => c.isEaten && !c.isPoisoned).length;
     const remainingCount = TOTAL_CHOCOLATES - chocolates.filter(c => c.isEaten).length;
@@ -90,6 +97,9 @@ const App: React.FC = () => {
         riskPercentage: riskPercentage
     };
   }, [chocolates]);
+  
+  const isGivingUp = gameOver && !gameWon && isRevealed;
+  const isGameOverOverlayVisible = (gameOver && !gameWon) || showWinOverlay;
 
   return (
     <div className="min-h-screen bg-slate-900 text-slate-200 font-sans p-4 md:p-6 flex flex-col items-center">
@@ -102,7 +112,14 @@ const App: React.FC = () => {
       </header>
 
       <main className="w-full flex-grow flex flex-col">
-        {((gameOver && !gameWon) || showWinOverlay) && <GameOverOverlay won={gameWon} money={stats.moneyEarned} onRestart={initializeGame} />}
+        {isGameOverOverlayVisible && (
+          <GameOverOverlay 
+            won={gameWon} 
+            money={isGivingUp ? 0 : stats.moneyEarned} 
+            onRestart={initializeGame}
+            isRevealed={isRevealed} 
+          />
+        )}
         
         <div className="sticky top-4 z-10 bg-slate-800/80 backdrop-blur-sm rounded-lg shadow-lg p-4 mb-4">
             <StatsPanel 
@@ -132,6 +149,7 @@ const App: React.FC = () => {
             <Controls
                 onReveal={handleReveal}
                 onRestart={initializeGame}
+                onGiveUp={handleGiveUp}
                 isGameOver={gameOver}
                 isRevealed={isRevealed}
             />

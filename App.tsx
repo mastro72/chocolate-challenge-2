@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import type { Chocolate as ChocolateType } from './types';
 import Chocolate from './components/Chocolate';
 import StatsPanel from './components/StatsPanel';
@@ -13,6 +13,8 @@ const App: React.FC = () => {
   const [gameOver, setGameOver] = useState<boolean>(false);
   const [isRevealed, setIsRevealed] = useState<boolean>(false);
   const [gameWon, setGameWon] = useState<boolean>(false);
+  const [showWinOverlay, setShowWinOverlay] = useState<boolean>(false);
+  const poisonedChocolateRef = useRef<HTMLButtonElement>(null);
 
   const initializeGame = useCallback(() => {
     const poisonedId = Math.floor(Math.random() * TOTAL_CHOCOLATES);
@@ -25,11 +27,34 @@ const App: React.FC = () => {
     setGameOver(false);
     setIsRevealed(false);
     setGameWon(false);
+    setShowWinOverlay(false);
   }, []);
 
   useEffect(() => {
     initializeGame();
   }, [initializeGame]);
+
+  useEffect(() => {
+    if (gameWon) {
+      const timer = setTimeout(() => {
+        setShowWinOverlay(true);
+      }, 2500); // Wait 2.5 seconds to show the win overlay
+      return () => clearTimeout(timer);
+    }
+  }, [gameWon]);
+
+  useEffect(() => {
+    if (isRevealed && poisonedChocolateRef.current) {
+      // A small delay to allow the UI to update with the highlight first
+      setTimeout(() => {
+        poisonedChocolateRef.current?.scrollIntoView({
+          behavior: 'smooth',
+          block: 'center',
+          inline: 'center',
+        });
+      }, 100);
+    }
+  }, [isRevealed]);
 
   const handleChocolateClick = useCallback((id: number) => {
     if (gameOver || isRevealed) return;
@@ -77,7 +102,7 @@ const App: React.FC = () => {
       </header>
 
       <main className="w-full flex-grow flex flex-col">
-        {gameOver && <GameOverOverlay won={gameWon} money={stats.moneyEarned} onRestart={initializeGame} />}
+        {((gameOver && !gameWon) || showWinOverlay) && <GameOverOverlay won={gameWon} money={stats.moneyEarned} onRestart={initializeGame} />}
         
         <div className="sticky top-4 z-10 bg-slate-800/80 backdrop-blur-sm rounded-lg shadow-lg p-4 mb-4">
             <StatsPanel 
@@ -93,6 +118,7 @@ const App: React.FC = () => {
             {chocolates.map(chocolate => (
               <Chocolate
                 key={chocolate.id}
+                ref={chocolate.isPoisoned ? poisonedChocolateRef : null}
                 chocolate={chocolate}
                 isRevealed={isRevealed || (gameOver && chocolate.isPoisoned)}
                 onClick={handleChocolateClick}

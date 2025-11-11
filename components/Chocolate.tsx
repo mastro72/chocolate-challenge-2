@@ -11,7 +11,7 @@ interface ChocolateProps {
   disabled: boolean;
 }
 
-const Chocolate: React.FC<ChocolateProps> = ({ chocolate, isRevealed, onClick, disabled }) => {
+const Chocolate: React.ForwardRefRenderFunction<HTMLButtonElement, ChocolateProps> = ({ chocolate, isRevealed, onClick, disabled }, ref) => {
   const { id, isPoisoned, isEaten } = chocolate;
 
   const handleClick = () => {
@@ -20,8 +20,10 @@ const Chocolate: React.FC<ChocolateProps> = ({ chocolate, isRevealed, onClick, d
     }
   };
 
+  const isTheRevealedPoison = isRevealed && isPoisoned;
+
   const getBackgroundColor = () => {
-    if (isRevealed && isPoisoned) {
+    if (isTheRevealedPoison) {
       return 'bg-red-500/50';
     }
     if (isEaten) {
@@ -31,7 +33,7 @@ const Chocolate: React.FC<ChocolateProps> = ({ chocolate, isRevealed, onClick, d
   };
   
   const getBorderColor = () => {
-    if (isRevealed && isPoisoned) {
+    if (isTheRevealedPoison) {
       return 'border-red-400';
     }
      if (isEaten) {
@@ -40,18 +42,26 @@ const Chocolate: React.FC<ChocolateProps> = ({ chocolate, isRevealed, onClick, d
     return 'border-amber-900';
   }
 
+  const getExtraClasses = () => {
+    if (isTheRevealedPoison) {
+        return 'shadow-lg shadow-red-500/50 scale-110 z-10';
+    }
+    return '';
+  }
+
   return (
     <button
+      ref={ref}
       onClick={handleClick}
       disabled={disabled}
-      className={`relative aspect-square w-full rounded-md border transition-all duration-200 ease-in-out flex items-center justify-center ${getBackgroundColor()} ${getBorderColor()} ${!disabled && 'cursor-pointer'}`}
+      className={`relative aspect-square w-full rounded-md border transition-all duration-300 ease-in-out flex items-center justify-center ${getBackgroundColor()} ${getBorderColor()} ${getExtraClasses()} ${!disabled && 'cursor-pointer'}`}
       aria-label={`Chocolate ${id + 1}`}
     >
         <div className={`transition-opacity duration-300 ${isEaten ? 'opacity-0' : 'opacity-100'}`}>
              <ChocolateIcon className="w-3/5 h-3/5 text-amber-950" />
         </div>
       
-      {isRevealed && isPoisoned && (
+      {isTheRevealedPoison && (
         <div className="absolute inset-0 flex items-center justify-center animate-pulse">
           <PoisonIcon className="w-4/5 h-4/5 text-red-300" />
         </div>
@@ -60,4 +70,4 @@ const Chocolate: React.FC<ChocolateProps> = ({ chocolate, isRevealed, onClick, d
   );
 };
 
-export default React.memo(Chocolate);
+export default React.memo(React.forwardRef(Chocolate));

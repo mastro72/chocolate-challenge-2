@@ -14,7 +14,6 @@ const App: React.FC = () => {
   const [isRevealed, setIsRevealed] = useState<boolean>(false);
   const [gameWon, setGameWon] = useState<boolean>(false);
   const [showWinOverlay, setShowWinOverlay] = useState<boolean>(false);
-  const [showGiveUpOverlay, setShowGiveUpOverlay] = useState<boolean>(false);
   const poisonedChocolateRef = useRef<HTMLButtonElement>(null);
 
   const initializeGame = useCallback(() => {
@@ -29,7 +28,6 @@ const App: React.FC = () => {
     setIsRevealed(false);
     setGameWon(false);
     setShowWinOverlay(false);
-    setShowGiveUpOverlay(false);
   }, []);
 
   useEffect(() => {
@@ -44,16 +42,6 @@ const App: React.FC = () => {
       return () => clearTimeout(timer);
     }
   }, [gameWon]);
-  
-  useEffect(() => {
-    const isGivingUp = gameOver && !gameWon && isRevealed;
-    if (isGivingUp) {
-      const timer = setTimeout(() => {
-        setShowGiveUpOverlay(true);
-      }, 5000); // Wait 5 seconds to show the overlay
-      return () => clearTimeout(timer);
-    }
-  }, [gameOver, gameWon, isRevealed]);
 
   useEffect(() => {
     if (isRevealed && poisonedChocolateRef.current) {
@@ -91,13 +79,6 @@ const App: React.FC = () => {
       setGameWon(true);
   }, [gameOver]);
 
-  const handleGiveUp = useCallback(() => {
-    if (gameOver) return;
-    setIsRevealed(true);
-    setGameOver(true);
-    setGameWon(false);
-  }, [gameOver]);
-
   const stats = useMemo(() => {
     const eatenCount = chocolates.filter(c => c.isEaten && !c.isPoisoned).length;
     const remainingCount = TOTAL_CHOCOLATES - chocolates.filter(c => c.isEaten).length;
@@ -111,7 +92,7 @@ const App: React.FC = () => {
   }, [chocolates]);
   
   const lostByPoison = gameOver && !gameWon && !isRevealed;
-  const isGameOverOverlayVisible = lostByPoison || showWinOverlay || showGiveUpOverlay;
+  const isGameOverOverlayVisible = lostByPoison || showWinOverlay;
 
   return (
     <div className="min-h-screen bg-slate-900 text-slate-200 font-sans p-4 md:p-6 flex flex-col items-center">
@@ -129,7 +110,6 @@ const App: React.FC = () => {
             won={gameWon} 
             money={gameWon ? stats.moneyEarned : 0} 
             onRestart={initializeGame}
-            isRevealed={isRevealed} 
           />
         )}
         
@@ -161,7 +141,6 @@ const App: React.FC = () => {
             <Controls
                 onReveal={handleReveal}
                 onRestart={initializeGame}
-                onGiveUp={handleGiveUp}
                 isGameOver={gameOver}
                 isRevealed={isRevealed}
             />

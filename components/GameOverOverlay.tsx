@@ -4,26 +4,22 @@ interface GameOverOverlayProps {
   won: boolean;
   money: number;
   onRestart: () => void;
-  isRevealed: boolean;
 }
 
-const GameOverOverlay: React.FC<GameOverOverlayProps> = ({ won, money, onRestart, isRevealed }) => {
+const GameOverOverlay: React.FC<GameOverOverlayProps> = ({ won, money, onRestart }) => {
   
   const getTitle = () => {
     if (won) return 'You Survived!';
-    if (isRevealed) return 'You Gave Up';
     return 'You Ate The Poison!';
   }
 
   const getDescription = () => {
     if (won) return "You wisely decided to stop and collected your winnings.";
-    if (isRevealed) return "You chose to reveal the poisoned chocolate. No money was earned.";
     return "Your luck ran out. The game is over.";
   }
 
   const getTitleColor = () => {
     if (won) return 'text-green-400';
-    if (isRevealed) return 'text-amber-400';
     return 'text-red-500';
   }
 

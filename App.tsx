@@ -74,6 +74,11 @@ const App: React.FC = () => {
     setGameStarted(true);
   };
 
+  const handleChangePlayer = () => {
+    setGameStarted(false);
+    setPlayerName('');
+  }
+
   useEffect(() => {
     if (gameStarted) {
       initializeGame();
@@ -172,6 +177,7 @@ const App: React.FC = () => {
             won={gameWon} 
             money={gameWon ? stats.moneyEarned : 0} 
             onRestart={initializeGame}
+            onChangePlayer={handleChangePlayer}
             playerName={playerName}
             leaderboard={leaderboard}
             currentScoreId={currentScoreId}

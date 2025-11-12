@@ -6,12 +6,13 @@ interface GameOverOverlayProps {
   won: boolean;
   money: number;
   onRestart: () => void;
+  onChangePlayer: () => void;
   playerName: string;
   leaderboard: ScoreEntry[];
   currentScoreId: string | null;
 }
 
-const GameOverOverlay: React.FC<GameOverOverlayProps> = ({ won, money, onRestart, playerName, leaderboard, currentScoreId }) => {
+const GameOverOverlay: React.FC<GameOverOverlayProps> = ({ won, money, onRestart, onChangePlayer, playerName, leaderboard, currentScoreId }) => {
   
   const getTitle = () => {
     if (won) return `You Survived, ${playerName}!`;
@@ -47,12 +48,20 @@ const GameOverOverlay: React.FC<GameOverOverlayProps> = ({ won, money, onRestart
 
         <Leaderboard scores={leaderboard} currentScoreId={currentScoreId} />
 
-        <button
-          onClick={onRestart}
-          className="w-full px-8 py-4 bg-indigo-600 text-white font-bold rounded-lg shadow-md hover:bg-indigo-500 transition-transform transform hover:scale-105"
-        >
-          Play Again
-        </button>
+        <div className="flex flex-col sm:flex-row gap-4">
+          <button
+            onClick={onRestart}
+            className="w-full px-6 py-3 bg-indigo-600 text-white font-bold rounded-lg shadow-md hover:bg-indigo-500 transition-transform transform hover:scale-105"
+          >
+            Play Again as {playerName}
+          </button>
+          <button
+            onClick={onChangePlayer}
+            className="w-full px-6 py-3 bg-slate-600 text-white font-bold rounded-lg shadow-md hover:bg-slate-500 transition-transform transform hover:scale-105"
+          >
+            Change Player
+          </button>
+        </div>
       </div>
     </div>
   );

@@ -4,6 +4,7 @@ import Chocolate from './components/Chocolate';
 import StatsPanel from './components/StatsPanel';
 import Controls from './components/Controls';
 import GameOverOverlay from './components/GameOverOverlay';
+import WelcomeScreen from './components/WelcomeScreen';
 
 const TOTAL_CHOCOLATES = 1000;
 const MONEY_PER_CHOCOLATE = 100000;
@@ -14,6 +15,8 @@ const App: React.FC = () => {
   const [isRevealed, setIsRevealed] = useState<boolean>(false);
   const [gameWon, setGameWon] = useState<boolean>(false);
   const [showWinOverlay, setShowWinOverlay] = useState<boolean>(false);
+  const [playerName, setPlayerName] = useState<string>('');
+  const [gameStarted, setGameStarted] = useState<boolean>(false);
   const poisonedChocolateRef = useRef<HTMLButtonElement>(null);
 
   const initializeGame = useCallback(() => {
@@ -29,10 +32,17 @@ const App: React.FC = () => {
     setGameWon(false);
     setShowWinOverlay(false);
   }, []);
+  
+  const handleStartGame = (name: string) => {
+    setPlayerName(name);
+    setGameStarted(true);
+  };
 
   useEffect(() => {
-    initializeGame();
-  }, [initializeGame]);
+    if (gameStarted) {
+      initializeGame();
+    }
+  }, [gameStarted, initializeGame]);
 
   useEffect(() => {
     if (gameWon) {
@@ -93,6 +103,10 @@ const App: React.FC = () => {
   
   const lostByPoison = gameOver && !gameWon && !isRevealed;
   const isGameOverOverlayVisible = lostByPoison || showWinOverlay;
+  
+  if (!gameStarted) {
+    return <WelcomeScreen onStartGame={handleStartGame} />;
+  }
 
   return (
     <div className="min-h-screen bg-slate-900 text-slate-200 font-sans p-4 md:p-6 flex flex-col items-center">
@@ -104,17 +118,19 @@ const App: React.FC = () => {
         </p>
       </header>
 
-      <main className="w-full flex-grow flex flex-col">
+      <main className="w-full flex-grow flex flex-col max-w-7xl">
         {isGameOverOverlayVisible && (
           <GameOverOverlay 
             won={gameWon} 
             money={gameWon ? stats.moneyEarned : 0} 
             onRestart={initializeGame}
+            playerName={playerName}
           />
         )}
         
         <div className="sticky top-4 z-10 bg-slate-800/80 backdrop-blur-sm rounded-lg shadow-lg p-4 mb-4">
             <StatsPanel 
+                playerName={playerName}
                 moneyEarned={stats.moneyEarned}
                 remainingChocolates={stats.remainingChocolates}
                 riskPercentage={stats.riskPercentage}

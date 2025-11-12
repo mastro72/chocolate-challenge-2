@@ -4,13 +4,14 @@ interface GameOverOverlayProps {
   won: boolean;
   money: number;
   onRestart: () => void;
+  playerName: string;
 }
 
-const GameOverOverlay: React.FC<GameOverOverlayProps> = ({ won, money, onRestart }) => {
+const GameOverOverlay: React.FC<GameOverOverlayProps> = ({ won, money, onRestart, playerName }) => {
   
   const getTitle = () => {
-    if (won) return 'You Survived!';
-    return 'You Ate The Poison!';
+    if (won) return `You Survived, ${playerName}!`;
+    return `You Ate The Poison, ${playerName}!`;
   }
 
   const getDescription = () => {
@@ -25,8 +26,8 @@ const GameOverOverlay: React.FC<GameOverOverlayProps> = ({ won, money, onRestart
 
   return (
     <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
-      <div className="bg-slate-800 rounded-2xl shadow-2xl p-8 max-w-md w-full text-center border border-slate-700">
-        <h2 className={`text-4xl font-extrabold mb-4 ${getTitleColor()}`}>
+      <div className="bg-slate-800 rounded-2xl shadow-2xl p-8 max-w-md w-full text-center border border-slate-700 animate-fade-in">
+        <h2 className={`text-3xl md:text-4xl font-extrabold mb-4 ${getTitleColor()}`}>
           {getTitle()}
         </h2>
         <p className="text-slate-300 text-lg mb-6">

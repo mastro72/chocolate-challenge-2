@@ -1,13 +1,15 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import type { Chocolate as ChocolateType } from './types';
+import type { Chocolate as ChocolateType, ScoreEntry } from './types';
 import Chocolate from './components/Chocolate';
 import StatsPanel from './components/StatsPanel';
 import Controls from './components/Controls';
 import GameOverOverlay from './components/GameOverOverlay';
 import WelcomeScreen from './components/WelcomeScreen';
+import Leaderboard from './components/Leaderboard';
 
 const TOTAL_CHOCOLATES = 1000;
 const MONEY_PER_CHOCOLATE = 100000;
+const LEADERBOARD_KEY = 'chocolateChallengeLeaderboard';
 
 const App: React.FC = () => {
   const [chocolates, setChocolates] = useState<ChocolateType[]>([]);
@@ -17,8 +19,40 @@ const App: React.FC = () => {
   const [showWinOverlay, setShowWinOverlay] = useState<boolean>(false);
   const [playerName, setPlayerName] = useState<string>('');
   const [gameStarted, setGameStarted] = useState<boolean>(false);
-  const poisonedChocolateRef = useRef<HTMLButtonElement>(null);
+  const [leaderboard, setLeaderboard] = useState<ScoreEntry[]>([]);
+  const [currentScoreId, setCurrentScoreId] = useState<string | null>(null);
 
+  const poisonedChocolateRef = useRef<HTMLButtonElement>(null);
+  const scoreRecordedRef = useRef<boolean>(false);
+
+  useEffect(() => {
+    try {
+      const savedScores = localStorage.getItem(LEADERBOARD_KEY);
+      if (savedScores) {
+        setLeaderboard(JSON.parse(savedScores));
+      }
+    } catch (error) {
+      console.error("Failed to load leaderboard from localStorage", error);
+    }
+  }, []);
+
+  const addScoreToLeaderboard = useCallback((newScore: ScoreEntry) => {
+    if (newScore.score < 0) return;
+      
+    const updatedScores = [...leaderboard, newScore]
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 10);
+    
+    setLeaderboard(updatedScores);
+    setCurrentScoreId(newScore.id);
+
+    try {
+      localStorage.setItem(LEADERBOARD_KEY, JSON.stringify(updatedScores));
+    } catch (error) {
+       console.error("Failed to save leaderboard to localStorage", error);
+    }
+  }, [leaderboard]);
+  
   const initializeGame = useCallback(() => {
     const poisonedId = Math.floor(Math.random() * TOTAL_CHOCOLATES);
     const initialChocolates = Array.from({ length: TOTAL_CHOCOLATES }, (_, i) => ({
@@ -31,6 +65,8 @@ const App: React.FC = () => {
     setIsRevealed(false);
     setGameWon(false);
     setShowWinOverlay(false);
+    scoreRecordedRef.current = false;
+    setCurrentScoreId(null);
   }, []);
   
   const handleStartGame = (name: string) => {
@@ -55,7 +91,6 @@ const App: React.FC = () => {
 
   useEffect(() => {
     if (isRevealed && poisonedChocolateRef.current) {
-      // A small delay to allow the UI to update with the highlight first
       setTimeout(() => {
         poisonedChocolateRef.current?.scrollIntoView({
           behavior: 'smooth',
@@ -65,6 +100,31 @@ const App: React.FC = () => {
       }, 100);
     }
   }, [isRevealed]);
+
+  const stats = useMemo(() => {
+    const eatenCount = chocolates.filter(c => c.isEaten && !c.isPoisoned).length;
+    const remainingCount = TOTAL_CHOCOLATES - chocolates.filter(c => c.isEaten).length;
+    const riskPercentage = remainingCount > 0 ? (1 / remainingCount) * 100 : 0;
+    
+    return {
+        moneyEarned: eatenCount * MONEY_PER_CHOCOLATE,
+        remainingChocolates: remainingCount,
+        riskPercentage: riskPercentage
+    };
+  }, [chocolates]);
+
+  useEffect(() => {
+      if (gameOver && !scoreRecordedRef.current) {
+          const finalScore = gameWon ? stats.moneyEarned : 0;
+          addScoreToLeaderboard({
+              playerName,
+              score: finalScore,
+              id: `${playerName}-${Date.now()}`
+          });
+          scoreRecordedRef.current = true;
+      }
+  }, [gameOver, gameWon, playerName, stats.moneyEarned, addScoreToLeaderboard]);
+
 
   const handleChocolateClick = useCallback((id: number) => {
     if (gameOver || isRevealed) return;
@@ -88,24 +148,12 @@ const App: React.FC = () => {
       setGameOver(true);
       setGameWon(true);
   }, [gameOver]);
-
-  const stats = useMemo(() => {
-    const eatenCount = chocolates.filter(c => c.isEaten && !c.isPoisoned).length;
-    const remainingCount = TOTAL_CHOCOLATES - chocolates.filter(c => c.isEaten).length;
-    const riskPercentage = remainingCount > 0 ? (1 / remainingCount) * 100 : 0;
-    
-    return {
-        moneyEarned: eatenCount * MONEY_PER_CHOCOLATE,
-        remainingChocolates: remainingCount,
-        riskPercentage: riskPercentage
-    };
-  }, [chocolates]);
   
   const lostByPoison = gameOver && !gameWon && !isRevealed;
   const isGameOverOverlayVisible = lostByPoison || showWinOverlay;
   
   if (!gameStarted) {
-    return <WelcomeScreen onStartGame={handleStartGame} />;
+    return <WelcomeScreen onStartGame={handleStartGame} leaderboard={leaderboard} />;
   }
 
   return (
@@ -125,6 +173,8 @@ const App: React.FC = () => {
             money={gameWon ? stats.moneyEarned : 0} 
             onRestart={initializeGame}
             playerName={playerName}
+            leaderboard={leaderboard}
+            currentScoreId={currentScoreId}
           />
         )}
         

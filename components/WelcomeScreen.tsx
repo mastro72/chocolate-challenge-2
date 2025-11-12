@@ -40,7 +40,7 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onStartGame, leaderboard 
                     type="text"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
-                    placeholder="e.g., Willy Wonka"
+                    placeholder="nome giocatore"
                     className="w-full px-4 py-3 bg-slate-900/50 border-2 border-slate-600 rounded-lg text-white text-center text-xl focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-all"
                     required
                     autoFocus
